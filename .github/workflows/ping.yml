@@ -11,4 +11,4 @@ jobs:
     steps:
       - name: Ping Render API
         run: |
-          curl https://your-api.onrender.com/health
+          curl https://phishwatch-api.onrender.com
