@@ -106,8 +106,8 @@ func addURL(c *gin.Context) {
 		return
 	}
 
-	if input.RiskScore < 30 || input.RiskScore > 100 {
-		c.JSON(400, gin.H{"error": "分数必须 30-100 才能存入"})
+	if input.RiskScore < 8 || input.RiskScore > 10 {
+		c.JSON(400, gin.H{"error": "分数必须 8-10 才能存入"})
 		return
 	}
 
@@ -147,8 +147,8 @@ func updateURL(c *gin.Context) {
 		return
 	}
 
-	if input.RiskScore < 30 || input.RiskScore > 100 {
-		c.JSON(400, gin.H{"error": "分数必须 30-100"})
+	if input.RiskScore < 8 || input.RiskScore > 10 {
+		c.JSON(400, gin.H{"error": "分数必须 8-10"})
 		return
 	}
 
