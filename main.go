@@ -38,7 +38,6 @@ func main() {
 
 	r.GET("/api/check", checkURL)
 	r.POST("/api/urls", addURL)
-	r.PUT("/api/urls", updateURL) // 修改分数
 
 	// Render 会提供 PORT 环境变量
 	r.Run()
@@ -132,50 +131,5 @@ func addURL(c *gin.Context) {
 		return
 	}
 
-	c.JSON(400, gin.H{"message": "URL 已存在，如果要更新请使用 PUT 接口"})
-}
-
-// PUT /api/urls - 更新 URL 分数
-func updateURL(c *gin.Context) {
-	var input struct {
-		URLPattern string `json:"url_pattern"`
-		RiskScore  int    `json:"risk_score"`
-	}
-
-	if err := c.ShouldBindJSON(&input); err != nil {
-		c.JSON(400, gin.H{"error": "无效的 JSON 数据"})
-		return
-	}
-
-	if input.RiskScore < 8 || input.RiskScore > 10 {
-		c.JSON(400, gin.H{"error": "分数必须 8-10"})
-		return
-	}
-
-	normalizedURL := normalizeURL(input.URLPattern)
-
-	var existingID int
-	var oldScore int
-	err := db.QueryRow("SELECT id, risk_score FROM grey_urls WHERE url_pattern = $1", normalizedURL).Scan(&existingID, &oldScore)
-	if err == sql.ErrNoRows {
-		c.JSON(404, gin.H{"error": "URL 不存在"})
-		return
-	}
-	if err != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
-		return
-	}
-
-	_, err = db.Exec("UPDATE grey_urls SET risk_score = $1 WHERE id = $2", input.RiskScore, existingID)
-	if err != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
-		return
-	}
-
-	c.JSON(200, gin.H{
-		"message":   "分数已更新",
-		"id":        existingID,
-		"old_score": oldScore,
-		"new_score": input.RiskScore,
-	})
+	c.JSON(400, gin.H{"message": "URL 已存在"})
 }
