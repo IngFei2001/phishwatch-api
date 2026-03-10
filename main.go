@@ -179,6 +179,3 @@ func updateURL(c *gin.Context) {
 		"new_score": input.RiskScore,
 	})
 }
-
-
-我这里是不是有关于UPDATE的api
