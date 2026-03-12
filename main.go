@@ -3,12 +3,16 @@ package main
 import (
 	"database/sql"
 	"log"
+	"net/http"
 	"net/url"
 	"os"
 	"strings"
+	"sync"
+    "time"
 
 	"github.com/gin-gonic/gin"
 	_ "github.com/lib/pq"
+	"golang.org/x/time/rate"
 )
 
 var db *sql.DB
@@ -17,6 +21,33 @@ type GreyURL struct {
 	ID         int    `json:"id"`
 	URLPattern string `json:"url_pattern"`
 	RiskScore  int    `json:"risk_score"`
+}
+
+var (
+    visitors = make(map[string]*rate.Limiter)
+    mu       sync.Mutex
+)
+
+func getVisitor(ip string) *rate.Limiter {
+    mu.Lock()
+    defer mu.Unlock()
+    limiter, exists := visitors[ip]
+    if !exists {
+        limiter = rate.NewLimiter(rate.Every(time.Minute), 60)
+        visitors[ip] = limiter
+    }
+    return limiter
+}
+
+func rateLimitMiddleware() gin.HandlerFunc {
+    return func(c *gin.Context) {
+        limiter := getVisitor(c.ClientIP())
+        if !limiter.Allow() {
+            c.AbortWithStatusJSON(http.StatusTooManyRequests, gin.H{"error": "Too many requests"})
+            return
+        }
+        c.Next()
+    }
 }
 
 func apiKeyAuth() gin.HandlerFunc {
@@ -51,9 +82,9 @@ func main() {
 
 	r := gin.Default()
 
-	r.GET("/api/check", checkURL)
-	r.POST("/api/urls", apiKeyAuth(), addURL)
-	r.PUT("/api/urls", apiKeyAuth(), updateURL)
+	r.GET("/api/check", rateLimitMiddleware(), checkURL)
+	r.POST("/api/urls", rateLimitMiddleware(), apiKeyAuth(), addURL)
+	r.PUT("/api/urls", rateLimitMiddleware(), apiKeyAuth(), updateURL)
 	// Render 会提供 PORT 环境变量
 	r.Run()
 }
