@@ -19,6 +19,17 @@ type GreyURL struct {
 	RiskScore  int    `json:"risk_score"`
 }
 
+func apiKeyAuth() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		key := c.GetHeader("X-API-Key")
+		if key != os.Getenv("API_SECRET_KEY") {
+			c.AbortWithStatusJSON(401, gin.H{"error": "Unauthorized"})
+			return
+		}
+		c.Next()
+	}
+}
+
 func main() {
 	// 连接 Neon 数据库
 	var err error
@@ -41,9 +52,8 @@ func main() {
 	r := gin.Default()
 
 	r.GET("/api/check", checkURL)
-	r.POST("/api/urls", addURL)
-	r.PUT("/api/urls", updateURL) // 修改分数
-
+	r.POST("/api/urls", apiKeyAuth(), addURL)
+	r.PUT("/api/urls", apiKeyAuth(), updateURL)
 	// Render 会提供 PORT 环境变量
 	r.Run()
 }
