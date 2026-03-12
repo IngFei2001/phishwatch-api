@@ -224,3 +224,5 @@ func updateURL(c *gin.Context) {
 		"new_score": input.RiskScore,
 	})
 }
+
+
