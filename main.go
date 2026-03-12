@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"log"
 	"net/url"
+	"os"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -21,8 +22,11 @@ type GreyURL struct {
 func main() {
 	// 连接 Neon 数据库
 	var err error
-	dbURL := "postgresql://neondb_owner:npg_MTkL9RNh1Zzl@ep-falling-haze-a1citxdd-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require"
-
+	dbURL := os.Getenv("DATABASE_URL")
+	if dbURL == "" {
+		log.Fatal("DATABASE_URL not set")
+	}
+	
 	db, err = sql.Open("postgres", dbURL)
 	if err != nil {
 		log.Fatal("数据库连接失败:", err)
